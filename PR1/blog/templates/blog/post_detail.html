@@ -1,0 +1,29 @@
+{% extends "blog/layout.html" %}
+{%  load imagekit %}
+{% block title %}
+    {{ post.title }}
+{% endblock %}
+{% block content %}
+
+     <form action="{{ post.id }}/edit/" method = "get">
+        <input type="submit" value = "수정" class = "btn btn-primary">
+    </form>
+    <h3>{{ post.title }}</h3>
+    {{ post.content|linebreaks }}
+    {% if post.photo %}
+    <img src="{{ post.photo.url }}"stype = "max-width:100%;" />
+        {% thumbnail "100x100" post.photo %}
+
+    {%endif %}
+    <h3>Comments</h3>
+    <ul>
+        {% for comment in post.comment_set.all %}
+            <li>{{ comment.message }}
+                <small>by {{ comment.author }}
+                    at {{ comment.updated_at }}</small>
+            </li>
+        {% endfor %}
+    </ul>
+    <hr/>
+    <a href="{% url "blog:post_list" %}" class = "btn btn-primary">Main Page</a>
+{% endblock %}

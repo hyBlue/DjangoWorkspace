@@ -1,0 +1,375 @@
+*APP을 만들면. manage.py startapp blog
+    - app 생성 후 프로젝트의 settings.py -> Installed_apps에 추가
+    - app 디렉토리 내 urls.py 생성
+    - 프로젝트 디렉토리 내 urls.py에 include
+
+*model
+    - python manage.py makemigrations blog
+        migrations 폴더 생성
+    - python manage.py migrate blog
+        model 내용을 데이터베이스에 반영
+    - admin 파일에 만든 모델 register
+        admin.site.register(Post)
+    - manage.py makemigrations : 작업 지시서를 만드는 것
+      manage.py migrate : 적용
+    - 모든 테이블에는 id필드 default (= primary key, pk)
+    - 기존 모델 클래스에 필수필드(blank, null.. )를 추가하여 makemigrations 수행 (디폴트는 fasle)
+      기존 레코드에 그 값을 어떤값으로 넣을지 물어보는 것.
+
+*Model Relationship Fields
+    - 1:N  - Foreign key
+        ForeignKey.on_delete 옵션
+            1측의 row가 삭제될 경우 N측 Row 처리
+            default로 CASCADE(일괄 삭제)
+            PROTECT : 삭제 방지
+            SET_NULL : null = True 면 해당 필드 null
+            SET_DEFAULT
+            SET : 값이나 함수 지정
+            DO_NOTHING
+        ForeignKey 에서 related_name 지정의 필요성
+            1:N관계에서 1->N으로의 접근 시 속성명 : 모델명 소문자_set (default)
+            related_name 을 설정해주면 그 이름으로 접근 가능. -> 충돌 방지.
+            '+'로 지정할 경우는 related_name을 포기한다는 뜻. 즉, model.post_set.all()을 쓰지 않겠다.
+
+
+       ex) post & comment
+
+    - N:N  - ManyToMany
+        post.tag_set.add(tag1,tag2,...)
+        post.tag_set.add( * tag_qs ) # unpack 기능. 쿼리셋을 통해 한번에 여러개의 태그를 적용
+        post.tag_set.remove() # 제거
+       ex) post & tag
+
+    - 1:1
+        ex) User 와 Profile
+
+     개수 카운트 : 쿼리셋.count()
+*정규표현식
+    val = "01035084385"
+    • 최대 3자리 숫자 : "[0-9]{1,3}" 혹은 "\d{1,3}"
+    • 휴대폰번호 : "010[1-9]\d{7}"
+    • 한글이름 2글자 혹은 3글자 : "[ㄱ-힣]{2,3}"
+    • 성이 "이" 인 이름 : "이[ㄱ-힣]{1,2}"
+
+    1글자 패턴
+        숫자 1글자 : "[0123456789]" 또는 "[0-9]" 또는 "\d"
+        알파벳 소문자 1글자 : "[abcdefghijklmnopqrstuvwxyz]" 혹은 "[a-z]"
+        알파벳 대문자 1글자 : "[ABCDEFGHIJKLMNOPQRSTUVWXYZ]" 혹은 "[A-Z]"
+        알파벳 대/소문자 1글자 : "[a-zA-Z]"
+        16진수 1글자 : "[0-9a-fA-F]"
+        문자열의 시작을 지정 : "^"
+        문자열의 끝을 지정 : "$"
+        m 한글 1글자 : "[ㄱ-힣]"
+
+    ^, $ : 시작과 끝
+    ex) 휴대폰 번호 : r"^01[016789][1-9]\d{6,7}$" # r : raw
+        만약 r 이없을 경우 \d를 \\d로 적어야 한다. (안써도 제대로 돌아가긴 함)
+        중괄호 : 6번 혹은 7번 \d가 반복.
+
+
+    url
+
+    r'^(?P<id>\d+)/$'
+        (?P )  : 이 영역의 문자열을 정규표현식으로 추출
+        \d+ : 숫자가 1회 이상 반복된다면
+        <x> : x라는 변수를 인자로 view 함수에 넘기겠다.
+        view의 인자로 받은 변수는 모두 string
+
+     숫자 여러개 받는법
+     r'^sum/(?P<numbers>[\d/]+)\$' : numbers 다음에 숫자 1개 혹은 /가 1회 이상 반복
+*view 함수에서 모든 첫번째 인자는 request
+
+*HTTP Status Code
+    200 : 성공
+        return HttpResponse, render
+    302 : 임시 url
+        return HttpResponseRedirect('/blog')
+        return URL Reverse
+        return redirect
+    404 : not found
+        raise Http404 #Exception Class
+        post = get_object_or_404(Post, id=100)
+    500 : server error
+        서버에서 요청 처리 중에 예기치 못한 오류
+
+*template 상속
+    1. 프로젝트 전체 레이아웃 template
+
+*template loader
+    1. app_directories.Loader
+        app/templates에서 템플릿 파일을 찾음.
+        -> 중복되지 않도록 앞에 앱이름의 디렉토리 생성
+    2. filesystem.Loader
+        settings.py의 TEMPLATES -> DIRS에서 찾는다.
+        os.path.join(BASE_DIR, '프로젝트명', 'templates')
+
+*URL REVERSE
+    url이 변경되더라도 url reverse가 자동으로 변경된 url을 추적하여 view함수 호출
+    개발자가 일일이 url 계산하지 않아도 된다.
+    url name과 namespace 지정.
+    name만 지정할 경우 다른 앱에 같은 name 이 있을때 오류
+
+    URL REverse 를 수행하는 4가지 함수
+    1. reverse : 매칭 url 이 없으면 NoReverseMatch 예외     return str
+        reverse('blog:post_detail', args=[10]) => '/bllog/10/'
+        reverse('blog:post_detail', kwargs = {'id':10})
+    2. resolve_url : 매칭 url이 없으면 '인자 문자열' 그대로 리턴 return str
+        resolve_url('blog:post_detail', 10)
+
+
+
+         * get_absolute_url 함수 : reslove_url이 호출하는 함수, 모델 내 구현현
+        우리는 각 모델에 대해 한가지 레코드를 보는 url을 만드는데 그것에 대해 url을 많이 만들게됨.
+        그때마다 url reverse를 계속 쓰는것은 소모적. 그걸 가능하게 해주는 것이 get_absoulte_url
+
+         post = post.objects.first()
+         reverse('blog:post_detail', args= [post.id])
+         resolve_url('blog:post_detail', post.id)
+         post.get_absolute_url()
+         resolve_url(post)
+         셋다 같은 결과 리턴
+    3. redirect함수 : 매칭 url이 없으면 '인자 문자열'을 url로 판단  return HttpResponse의 인스턴스
+        내부적으로 resolve_url 사용
+        ( view 함수 내에서 특정 url로 이동할때 유용)
+        return redirect('blog:post_detail', 10) -> HttpResponseRedirect 객체 리턴
+    4. url template tag : 내부적으로 reverse 함수 사용 return str
+
+*django template engine
+    {{ variable}}
+    {{mydict.key}} : dict 의 key에 attr처럼 접근
+    {{myobj.attr }}
+    {{myobj.func}} : 소괄호 없음, 인자 있는 함수 호출 불가
+    {{mylist.0}}  : 인덱스 접근.
+
+    django template tag
+    {% %} block comment autoescape...
+    {##} 한줄  주석
+    {% comment %}
+    {% endcomment %}    여러줄 주석
+    {% for %}
+        forloop.counter : 반복 인덱스 (1부터 시작)
+        forloop.counter0 : 0부터 시작
+        forloop.revcounter : 끝부터 시작
+        forloop.revcounter0 : 끝-1부터 시작
+        forloop.first, forloop.last : 첫 실행 여부, 마지막 실행 여부
+        forloop.parentloop : 중첩 loop에서 부모 loop을 지정
+        {% empty %} for tag 내에서 비었거나 지정object를 찾을 수 없을때 사용
+
+
+    {%if changed%}
+    {%endifchanged%} : 인자가 없으면 content의 내용이 변경되었을 때 True, 인자가 있으면 인자가 변경되었을
+    때 True
+
+    {% inlcude %} : 다른 템플릿을 로딩,렌더링 수행
+    with를 통해 추가 context 지정가능
+
+    {% load %}
+    커스텀 template tag/ filter set 로딩
+
+    lorem tag : 랜덤 채우기 텍스트생성
+    {% lorem [count] [method] [random] %}
+    count : 생성할 단락, 단어의 수 default = 1
+    method : 단어 w html단락 p  plain text 단락 b
+    random : 지정 시에는 보통의 채우기, 아니면 랜덤문자열생성
+
+    {% now %} : 현재 날짜/시각
+
+    {% url %} : url reverse기능, get_absolute_url 처리는 하지 않음.
+
+    {%verbatim%} : 지정 블락 내에서는 장고 템플릿 렌더링 하지 않음.
+    {%endverbatim%}
+
+    {% with %} 변수에 새로운 값을 assign
+    {%endwith%}
+
+
+*django template tag
+    {{var | filter1 : var2 }}  var 이 filter1의 첫번쨰 인자, var2가 두번쨰 인자
+    {{var | filter1 : var2 | filter4 }} |이전의 결과가 filter4의 인자
+
+    날짜/시각 출력 지정
+        {{ past_dt|timesince }} => 현재시각 기준 (now - past_dt)
+        {{ past_dt|timesince:criteria_dt }} => 기준시각 기준 (criteria_dt - past_dt)
+        {{ future_dt|timeuntil }} => 현재시각 기준 (future_dt - now)
+        {{ future_dt|timeuntil:past_dt}} => 기준시각 기준 (future_dt - past_dt)
+
+    default: 값이 False 일 경우 지정 디폴트값으로 출력
+    {{ value | default : "nothing" }}
+    {{ value | default_if_none : "nothing"}} : false가 아니고 none일때만.
+
+    length filter
+    {{value | length}}
+
+    linebreaks filter
+    value = "Joel \n is a slug"
+    {{value | linebreaks}} 개행은 br, 양쪽은 p태그그
+   <p>joel<br/> is a slug</p>
+
+    linebreaksbr tag는 p는 안쓰고 br만
+
+    random filter
+    {{value | random}} =-> ['a','b','c','d'] 일 경우 아무거나
+
+    safe filter
+    문자열을 safestring으로 변환
+
+    slice filter
+        파이썬의 리스트 슬라이싱과 동일
+        {{ some_list | slice : ":2" }} => ['a','b','c'] 일 경우 ['a', 'b']
+
+    striptags : html태그를 모두 제거
+
+    truancate
+    value1 = "Joel is a slug"
+    value2 = "<p>Joel is a slug</p>"
+    {{ value1|truncatewords:2 }} => "Joel is ..."
+    {{ value2|truncatewords_html:2 }} => "<p>Joel is ...</p>"
+
+    urlize filter #ref
+        • URL 문자열과 이메일주소 문자열을 클릭가능한 링크로 변환/출력
+        • URL일 경우
+        • 문자열이 http://, https://, www. 로 시작할 경우 변환
+        • 문자열이 도메인만 지정되었을 경우, 최상위 도메인
+        이 .com, .edu, .gov, .int, .mil, .net, .org 일 경우 변환
+        • 생성된 URL에는 rel="nofollow" 속성이 추가
+        EP 17. Template Engines (Template Filter) / 장고 차근차근 시작하기 / © AskDjango 19
+        이 문서는 user424 님께 사용이 허가된 문서입니다. (2017-08-01 16:35:20, Asia/Seoul)
+        • https://goo.gl/aia1t 는 변환되나, goo.gl/aia1t 는 변환 불가
+        value1 = "Check out www.djangoproject.com"
+        value2 = "Send questions to foo@example.com"
+        {{ value1|urlize }}
+         => "Check out <a href="http://www.djangoproject.com" rel="nofollow">
+         www.djangoproject.com
+         </a>"
+        {{ value2|urlize }}
+         => "Send questions to <a href="mailto:foo@example.com">foo@example.com</a>"
+
+
+     form tag
+     action , method, enctype속성
+     (필수)action : 어디로 보낼건지 url 주소
+     (필수)method : 어떠한 방식으로 GET(데이터 조회) POST(수정 생성 삭제)
+        GET방식 : 엽서. 물건을 보낼 수 없다. HEADER만, enctype 지정 불가.
+        POST : 택배, 다양한 물건을 보내고 HEADER& BODY 같이감.
+
+     enctype : post시에만 유효, 유저에게 받은 데이터를 어떻게 패키징하는지.
+        1.urlencoded 방식 : 주소 뒤에 싣거나(get) body에 싣기(post) 파일업로드 불가
+            key=value 쌍이 &문자로 이어진 형태, 공백은 +로 인코딩
+            from urllib.parse import urlencode
+            print(urlencode({'key1' : 'value1', 'key2':10, 'name' : '공유'}))
+        2. "multipart/form -data" : body에만 실을 수 있다. -> 그래서 POST에서만 사용 가능, 파일업로드 가능
+
+
+     input type = "text" : 1줄 문자열
+     textarea : 1줄 이상
+     select 항목중 택일
+     input type="checkbox" 한 그룹내 여러항목 다수 선택
+     input type="radio" 하나만 선택
+     input type = "file" name = "photo" 파일 선택하는 위젯
+     input type="submit" value = "저장"
+
+*cross - site request forgery(csrf)
+    사이트 간 요청 위조 공격
+    POST요청에 한해 CsrfViewMiddleware을 통해 csrf token을 체크
+
+*HttpRequest, HttpResponse
+    1. HttpRequest : 클라이언트로부터의 모든 요청 내용을 담고 있으며, 요청 시마다 뷰 함수의 첫번째 인자로 전달달
+        CBV에서는 self.request로 접근.
+        request.method : 'GET' or 'POST'
+        request.GET : GET인자 querydict 타입
+        request.POST : POST인자 querydict 타입
+        request.FILES : POST업로드 파일 인자. MultiValueDict 타입
+            MultiValueDict : dict 상속. 동일 key의 다수 value 지원, getlist로 접근
+            Qudrydict : 수정불가한 multivaluedict/ getlist로 접근
+
+    2. HttpResponse : 모든 view 함수의 리턴값은 HttpResponse 의 instance
+        render 도 마찬가지 -> 좀 더 쉽게 렌더링 하게 해줌
+
+*Form class
+    폼 처리 시 같은 URL(같은 뷰)에서 GET/POST로 나눠 처리
+    GET: 입력 폼을 보여줌
+    POST : 데이터를 입력받아 유효성 검증 과정을 거침. 성공시 Success url 로 이동, 실패 시 입력 폼 다시보여줌
+
+    파일 내에서 오브젝트 생성
+
+    form.cleaned_data['title']
+    ...
+
+    방법 1.
+    post = Post()
+    post.title =
+    post.content =
+    post.save()
+
+    방법 2.
+    post = Post(title = ' ', content = ' '...)
+    post.save
+
+    방법 3.
+    post = Post.objects.create(title = , contetn = ' ')
+
+    방법 4.
+    post = Post(**cleaned_data) -> dict타입이라. 자동 적용 가능
+
+    *ModelForm
+        form을 받을 때 model 에있는것 그대로 받는다면 훨씬 효율적
+        지정된 모델로부터 필드 정보를 읽어들임.
+
+    *Form 유효성 검사.
+    1. validator 을 통한 검사 -> 조건을 통해 예외 발생 ValidationError
+        함수 validator는 snake_case, 클래스 validator 는 CamelCase
+        class validator의 인스턴스는 함수처럼 호출 가능
+    2. form 클래스 내 멤버clean_함수를 통한 검사 -> 유효성 검사 및 리턴값을 통해 값 변경
+        1. 필드별 에러 기록 or 두개 이상의 필드 error 기록(NON FIELD ERROR)
+            validation error 혹은 add_error
+        2. 원하는 포맷으로 값 변경
+            리턴값을 통해 변경 지원
+
+    ** 모든 validator 는 모델에 정의,
+     clean은
+        -특정 form에서 1회성 유효성 검사.
+        -다수 필드값에서 유효성 검사
+        -필드값 변경할 필요가 있을때(validator은 값 조건만 체크할뿐 변경 불가)
+
+
+*HTML FORM 멋지게 만들기
+    form 기본제공함수
+        form.as_table() : 테이블형식 렌더링
+        form.as_ul()
+        form.as_p()
+
+*Messages Framework
+    1회성 메세지를 담는 용도, HttpRequest 인스턴스를 통해.
+
+    django/contrib/messages/context_processors.py
+    context_processors 의 역할은 httrprequest 인자를 하나 받아 dict 를 리턴.
+    거의 모든 템플릿에서 쓰는 변수목록을 매번 view에서 지정해서 넘기긴 번거롭기에 view에서 렌더할때
+    따로 지정하지 않아도 자동으로 값을 지정해주는 것.
+
+    장고에서는 Error가 bootstrap에서는 Danger임.
+    그래서 settings.py에서 errod의 tag를 danger로 출력하도록 설정을 바꿔야됨.
+
+    from django.contrib.meesages import constants
+    MESSAGE_TAGS = { constants.ERROR : 'danger}
+
+*MEDIA files
+    settings.py 에 MEDIA_URL 과 MEDIA_DIR 지정
+    media는 filefielld / imagefield 두가지
+    1. filefield : 파일 저장. 파일은 settings.MEdia-root 경로에 저장하며 DB에는 그 하위경로 저장
+    개별서버에서는 서빙 미지원, 그래서 직접 서빙rule 추가.
+    프로젝트/urls.py -> urlpatterns += static(settings.MEDIA_URL, document_root =settings.MEDIA_ROOT)
+
+*IMAGE
+    JPG : 이미지 품질대비 용량이 작음
+    PNG : 투명 혹은 문자가 많은 이미지 사용용
+
+*THUMBNAIL
+    3번쨰. 템플릿 내에서 직접 섬네일 처리하기가 가장 나은 방법.
+    django-imagekit 다운받아서 settings.py에 등록 필수
+*widjet
+    ui입력 요소
+
+*배포준비
+    404, 500 error .html템플릿 만들어두면 실서비스시 그것으로 렌더링
+
+ reqs폴더 : 개발용, 공통, 서비스용 따로.

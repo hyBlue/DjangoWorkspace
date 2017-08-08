@@ -1,0 +1,33 @@
+{% extends "blog/layout.html" %}
+
+{% block content %}
+    <p>
+    <form action="post_posting/" method = "get">
+        <input type="submit" value = "글쓰기" class = "btn btn-primary">
+    </form>
+</p>
+
+    <h2> Post List </h2>
+
+    <table class ="table table-hover table-bordered">
+    <thead>
+    <tr>
+        <th>id</th>
+        <th>title</th>
+        <th>author</th>
+        <th>updated_at</th>
+    </tr>
+    </thead>
+        {% for post in post_list %}
+            <tr>
+                <td> {{ post.id }}</td>
+                <td>  <a href="{% url "blog:post_detail" post.id %}">{{ post.title }}</a></td>
+
+
+              <td>  by {{ post.author }}</td>
+                 <td>   at {{ post.updated_at }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}

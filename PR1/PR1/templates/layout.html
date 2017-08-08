@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootswatch/3.3.7/simplex/bootstrap.min.css"/>
+    <link rel="stylesheet" href="{% static "style.css" %}"/>
+    <script src="//code.jquery.com/jquery-2.2.4.min.js"></script>
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<nav class="navbar navbar-default">
+    <div class="container">
+        <div class="navbar-header">
+
+
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">hyBlue's </a>
+        </div>
+        <div id="navbar" class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="{% url "root" %}">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="#">회원가입</a></li>
+                <li><a href="#">로그인</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="alert alert-info">
+    alert-info 스타일 메세지
+</div>
+
+<div class=" alert alert-success"></div>
+<div class=" alert alert-warning"></div>
+<div class=" alert alert-danger"></div>
+<div class="container">
+{%  if messages %}
+{%  for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+    {{ message.message }}
+    </div>
+{% endfor %}
+{% endif %}
+    <div class="jumbotron">
+        <h1> WELCOME! </h1>
+    </div>
+
+<form action="" method='get'>
+    <input type="text" name="q" value= {{ q }}>
+   <input type="submit" value="검색" class = "btn btn-primary"/>
+
+</form>
+
+
+
+        {% block content %}
+        {% endblock %}
+
+<hr/>
+    made by hyBlue
+</div>
+</body>
+</html>
